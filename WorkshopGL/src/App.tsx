@@ -1,7 +1,3 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-
-import { Cities } from './pages/Cities/Cities'
-
 function App() {
   return (
     <BrowserRouter>

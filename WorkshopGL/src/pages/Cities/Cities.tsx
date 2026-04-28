@@ -1,29 +1,42 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
+import {
+  Container,
+  Typography,
+  FormControl,
+  Select,
+  MenuItem,
+  TextField,
+  CircularProgress,
+  Alert,
+  Box,
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  Button,
+  IconButton,
+} from '@mui/material'
+import DeleteIcon from '@mui/icons-material/Delete'
 
 import { ENDPOINTS } from '../../endpoints/endpoints'
+import type { Country, State, City as BackendCity } from '../../types/cities'
 
-type Country = {
-  iso2: string
-  name: string
-}
-
-type State = {
-  iso2: string
-  name: string
-}
-
-type City = {
+type CscCity = {
   name: string
 }
 
 export const Cities = () => {
   const apiKey = import.meta.env.VITE_CSC_API_KEY as string | undefined
+  const backendBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined
 
   const [countries, setCountries] = useState<Country[]>([])
   const [states, setStates] = useState<State[]>([])
-  const [cities, setCities] = useState<City[]>([])
-  const [selectedCountry, setSelectedCountry] = useState('RO')
+  const [cities, setCities] = useState<CscCity[]>([])
+  // managedCities: cities returned by your backend (with id, cityName)
+  const [managedCities, setManagedCities] = useState<BackendCity[]>([])
+  const [newCityName, setNewCityName] = useState('')
+  const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedState, setSelectedState] = useState('')
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -56,10 +69,8 @@ export const Cities = () => {
 
           setCountries(sortedCountries)
 
-          const hasDefaultCountry = sortedCountries.some((country) => country.iso2 === 'RO')
-          if (!hasDefaultCountry && sortedCountries.length > 0) {
-            setSelectedCountry(sortedCountries[0].iso2)
-          }
+          const defaultCountry = sortedCountries.find((country) => country.iso2 === 'RO') ?? sortedCountries[0]
+          setSelectedCountry(defaultCountry?.iso2 ?? '')
         }
       } catch {
         if (!ignore) {
@@ -139,7 +150,7 @@ export const Cities = () => {
         setIsLoading(true)
         setError('')
 
-        const citiesResponse = await axios.get<City[]>(ENDPOINTS.cities(selectedCountry, selectedState), {
+        const citiesResponse = await axios.get<CscCity[]>(ENDPOINTS.cities(selectedCountry, selectedState), {
           headers: {
             'X-CSCAPI-KEY': apiKey,
           },
@@ -175,83 +186,193 @@ export const Cities = () => {
       return cities
     }
 
-    return cities.filter((city) => city.name.toLowerCase().includes(value))
+    // adapt for backend-managed cities (cityName) or CSC cities (name)
+    return cities.filter((city: any) => {
+      const name = (city.cityName ?? city.name ?? '').toLowerCase()
+      return name.includes(value)
+    })
   }, [cities, search])
 
+  // --- Backend managed cities handlers ---------------------------------
+  async function fetchManagedCities() {
+    try {
+      if (!backendBaseUrl) {
+        setManagedCities([])
+        return
+      }
+
+      const res = await axios.get<BackendCity[]>(`${backendBaseUrl}/cities`)
+      setManagedCities(Array.isArray(res.data) ? res.data : [])
+    } catch (e) {
+      setManagedCities([])
+    }
+  }
+
+  useEffect(() => {
+    fetchManagedCities()
+  }, [])
+
+  async function addCity() {
+    const name = newCityName.trim()
+    if (!name) return
+    try {
+      if (!backendBaseUrl) {
+        setError('Lipseste VITE_API_BASE_URL pentru backend.')
+        return
+      }
+
+      await axios.post(`${backendBaseUrl}/cities/add`, { name })
+      setNewCityName('')
+      await fetchManagedCities()
+    } catch (e) {
+      setError('Eroare la adaugarea orasului.')
+    }
+  }
+
+  async function deleteCity(id: string) {
+    if (!confirm('Esti sigur ca vrei sa stergi orasul?')) return
+    try {
+      if (!backendBaseUrl) {
+        setError('Lipseste VITE_API_BASE_URL pentru backend.')
+        return
+      }
+
+      await axios.delete(`${backendBaseUrl}/cities/id/${id}`)
+      await fetchManagedCities()
+    } catch (e) {
+      setError('Eroare la stergerea orasului.')
+    }
+  }
+
   return (
-    <main style={{ maxWidth: 900, margin: '0 auto', padding: '2rem 1rem' }}>
-      <h1 style={{ marginTop: 0 }}>Lista de orase</h1>
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Typography variant="h4" component="h1" sx={{ mb: 3 }}>
+        Lista de orase
+      </Typography>
 
-      <div style={{ display: 'grid', gap: '0.75rem', marginBottom: '1rem', gridTemplateColumns: '1fr 1fr' }}>
-        <label>
-          Tara
-          <select
-            value={selectedCountry}
-            onChange={(event) => setSelectedCountry(event.target.value)}
-            style={{ width: '100%', padding: '0.55rem', marginTop: '0.35rem' }}
-          >
-            {countries.map((country) => (
-              <option key={country.iso2} value={country.iso2}>
-                {country.name}
-              </option>
-            ))}
-          </select>
-        </label>
+      <Box sx={{ display: 'grid', gap: 2, mb: 3, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' } }}>
+        <Box>
+          <FormControl fullWidth>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              Tara
+            </Typography>
+            <Select
+              value={selectedCountry}
+              onChange={(event) => setSelectedCountry(event.target.value)}
+              size="small"
+            >
+              {countries.map((country) => (
+                <MenuItem key={country.iso2} value={country.iso2}>
+                  {country.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
 
-        <label>
-          Stat / Regiune
-          <select
-            value={selectedState}
-            onChange={(event) => setSelectedState(event.target.value)}
-            disabled={!states.length}
-            style={{ width: '100%', padding: '0.55rem', marginTop: '0.35rem' }}
-          >
-            {states.map((stateItem) => (
-              <option key={stateItem.iso2} value={stateItem.iso2}>
-                {stateItem.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+        <Box>
+          <FormControl fullWidth>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              Stat / Regiune
+            </Typography>
+            <Select
+              value={selectedState}
+              onChange={(event) => setSelectedState(event.target.value)}
+              disabled={!states.length}
+              size="small"
+            >
+              {states.map((stateItem) => (
+                <MenuItem key={stateItem.iso2} value={stateItem.iso2}>
+                  {stateItem.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+      </Box>
 
-      <label htmlFor="city-search" style={{ display: 'block', marginBottom: '0.5rem' }}>
-        Cauta oras
-      </label>
-      <input
+      <TextField
         id="city-search"
         type="text"
         value={search}
         onChange={(event) => setSearch(event.target.value)}
         placeholder="Ex: Cluj-Napoca"
-        style={{
-          width: '100%',
-          padding: '0.65rem 0.75rem',
-          borderRadius: 8,
-          border: '1px solid #c7c7c7',
-          marginBottom: '1rem',
-          boxSizing: 'border-box',
-        }}
+        fullWidth
+        label="Cauta oras"
+        size="small"
+        variant="outlined"
+        sx={{ mb: 3 }}
       />
 
-      {isLoading && <p>Se incarca orasele...</p>}
-      {!isLoading && error && <p style={{ color: '#b00020' }}>{error}</p>}
+      {isLoading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {!isLoading && error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       {!isLoading && !error && (
         <>
-          <p style={{ marginTop: 0 }}>
+          <Typography variant="subtitle1" sx={{ mb: 2 }}>
             Total orase: <strong>{filteredCities.length}</strong>
-          </p>
-          <ul style={{ margin: 0, paddingLeft: '1.2rem', columns: 2 }}>
-            {filteredCities.map((city) => (
-              <li key={city.name} style={{ marginBottom: '0.35rem' }}>
-                {city.name}
-              </li>
-            ))}
-          </ul>
+          </Typography>
+
+          <Paper variant="outlined">
+            <List sx={{ columns: { xs: 1, sm: 2 }, columnGap: 2 }}>
+              {filteredCities.map((city) => (
+                <ListItem key={(city as any).name ?? (city as any).id} sx={{ breakInside: 'avoid' }}>
+                  <ListItemText primary={(city as any).name ?? (city as any).cityName} />
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
         </>
       )}
-    </main>
+
+      {/* Backend-managed cities UI */}
+      <Box sx={{ mt: 4 }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>
+          Orase gestionate (backend)
+        </Typography>
+
+        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+          <TextField
+            value={newCityName}
+            onChange={(e) => setNewCityName(e.target.value)}
+            label="Nume oras"
+            size="small"
+            fullWidth
+          />
+          <Button variant="contained" onClick={addCity} disableElevation>
+            Adauga
+          </Button>
+        </Box>
+
+        <Paper variant="outlined">
+          {!backendBaseUrl ? (
+            <Box sx={{ p: 2 }}>
+              <Alert severity="info">Configureaza <strong>VITE_API_BASE_URL</strong> in <strong>.env</strong> ca sa vezi si sectiunea de backend.</Alert>
+            </Box>
+          ) : (
+            <List>
+              {managedCities.map((mc) => (
+                <ListItem
+                  key={mc.id}
+                  secondaryAction={
+                    <IconButton edge="end" onClick={() => deleteCity(mc.id)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  }
+                >
+                  <ListItemText primary={mc.cityName} />
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </Paper>
+      </Box>
+    </Container>
   )
 }
 

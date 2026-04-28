@@ -1,10 +1,5 @@
-function App() {
+import { Layout } from "./components/Layout/Layout";
 
-  return (
-    <>
-      
-    </>
-  )
-}
-
-export default App
+export const App = () => {
+  return <Layout />;
+};

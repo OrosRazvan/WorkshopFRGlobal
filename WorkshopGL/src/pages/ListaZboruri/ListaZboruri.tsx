@@ -38,7 +38,7 @@ export const ListaZboruri: React.FC = () => {
         {/* --- HEADER --- */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
           <Box>
-            <Typography variant="h3" sx={{ fontWeight: 'bold', color: '#1a3a52', mb: 1 }}>
+            <Typography variant="h3" sx={{ fontWeight: 'bold', color: '#233f91', mb: 1 }}>
               Flight Management
             </Typography>
             <Typography variant="body1" sx={{ color: '#666', mt: 1 }}>
@@ -47,7 +47,7 @@ export const ListaZboruri: React.FC = () => {
           </Box>
           <Button
             variant="contained"
-            sx={{ bgcolor: '#1a3a52', color: 'white', textTransform: 'none' }}
+            sx={{ bgcolor: '#233f91', color: 'white', textTransform: 'none' }}
             startIcon={<AddIcon />}
           >
             Add New Flight
@@ -72,7 +72,7 @@ export const ListaZboruri: React.FC = () => {
             />
             <Button
               variant="contained"
-              sx={{ bgcolor: '#1a3a52' }}
+              sx={{ bgcolor: '#233f91' }}
               startIcon={<FilterListIcon />}
             >
               Filters
@@ -163,7 +163,7 @@ export const ListaZboruri: React.FC = () => {
                     {/* Header: Flight Number and Price */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#1a3a52' }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#233f91' }}>
                           {flight.airplaneName}
                         </Typography>
                         <Typography variant="body2" sx={{ color: '#666' }}>
@@ -171,7 +171,7 @@ export const ListaZboruri: React.FC = () => {
                         </Typography>
                       </Box>
                       <Box sx={{ textAlign: 'right' }}>
-                        <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1a3a52' }}>
+                        <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#233f91' }}>
                           ${flight.cost}
                         </Typography>
                         <Chip
@@ -218,7 +218,7 @@ export const ListaZboruri: React.FC = () => {
                     <Button
                       fullWidth
                       variant="contained"
-                      sx={{ bgcolor: '#1a3a52', textTransform: 'none' }}
+                      sx={{ bgcolor: '#233f91', textTransform: 'none' }}
                     >
                       View Details
                     </Button>

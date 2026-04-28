@@ -1,7 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import {
-  Container,
   Typography,
   FormControl,
   Select,
@@ -17,7 +16,11 @@ import {
   Button,
   IconButton,
 } from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
+import FlightIcon from '@mui/icons-material/Flight'
+import BusinessIcon from '@mui/icons-material/Business'
+import FilterAltIcon from '@mui/icons-material/FilterAlt'
 
 import { ENDPOINTS } from '../../endpoints/endpoints'
 import type { Country, State, City as BackendCity } from '../../types/cities'
@@ -186,11 +189,7 @@ export const Cities = () => {
       return cities
     }
 
-    // adapt for backend-managed cities (cityName) or CSC cities (name)
-    return cities.filter((city: any) => {
-      const name = (city.cityName ?? city.name ?? '').toLowerCase()
-      return name.includes(value)
-    })
+    return cities.filter((city) => city.name.toLowerCase().includes(value))
   }, [cities, search])
 
   // --- Backend managed cities handlers ---------------------------------
@@ -245,134 +244,170 @@ export const Cities = () => {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" sx={{ mb: 3 }}>
-        Lista de orase
-      </Typography>
+    
 
-      <Box sx={{ display: 'grid', gap: 2, mb: 3, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' } }}>
-        <Box>
-          <FormControl fullWidth>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>
-              Tara
+      <Box sx={{ flex: 1, px: { xs: 2, md: 6 }, py: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, alignItems: 'center', mb: 3.5 }}>
+          <Box>
+            <Typography sx={{ color: '#1D3E98', fontWeight: 800, fontSize: { xs: 34, md: 56 }, lineHeight: 1.05 }}>
+              Cities Management
             </Typography>
-            <Select
-              value={selectedCountry}
-              onChange={(event) => setSelectedCountry(event.target.value)}
-              size="small"
-            >
-              {countries.map((country) => (
-                <MenuItem key={country.iso2} value={country.iso2}>
-                  {country.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-
-        <Box>
-          <FormControl fullWidth>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>
-              Stat / Regiune
-            </Typography>
-            <Select
-              value={selectedState}
-              onChange={(event) => setSelectedState(event.target.value)}
-              disabled={!states.length}
-              size="small"
-            >
-              {states.map((stateItem) => (
-                <MenuItem key={stateItem.iso2} value={stateItem.iso2}>
-                  {stateItem.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-      </Box>
-
-      <TextField
-        id="city-search"
-        type="text"
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-        placeholder="Ex: Cluj-Napoca"
-        fullWidth
-        label="Cauta oras"
-        size="small"
-        variant="outlined"
-        sx={{ mb: 3 }}
-      />
-
-      {isLoading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress />
-        </Box>
-      )}
-
-      {!isLoading && error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-      {!isLoading && !error && (
-        <>
-          <Typography variant="subtitle1" sx={{ mb: 2 }}>
-            Total orase: <strong>{filteredCities.length}</strong>
-          </Typography>
-
-          <Paper variant="outlined">
-            <List sx={{ columns: { xs: 1, sm: 2 }, columnGap: 2 }}>
-              {filteredCities.map((city) => (
-                <ListItem key={(city as any).name ?? (city as any).id} sx={{ breakInside: 'avoid' }}>
-                  <ListItemText primary={(city as any).name ?? (city as any).cityName} />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        </>
-      )}
-
-      {/* Backend-managed cities UI */}
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>
-          Orase gestionate (backend)
-        </Typography>
-
-        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-          <TextField
-            value={newCityName}
-            onChange={(e) => setNewCityName(e.target.value)}
-            label="Nume oras"
-            size="small"
-            fullWidth
-          />
-          <Button variant="contained" onClick={addCity} disableElevation>
-            Adauga
+            <Typography sx={{ color: '#5c6470', mt: 1 }}>Browse and manage available cities</Typography>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={addCity}
+            sx={{
+              minWidth: 176,
+              height: 46,
+              fontWeight: 700,
+              bgcolor: '#1D3E98',
+              borderRadius: 2,
+              boxShadow: '0 8px 16px rgba(29, 62, 152, 0.28)',
+              '&:hover': { bgcolor: '#15337f' },
+            }}
+          >
+            Add New City
           </Button>
         </Box>
 
-        <Paper variant="outlined">
-          {!backendBaseUrl ? (
-            <Box sx={{ p: 2 }}>
-              <Alert severity="info">Configureaza <strong>VITE_API_BASE_URL</strong> in <strong>.env</strong> ca sa vezi si sectiunea de backend.</Alert>
-            </Box>
-          ) : (
-            <List>
-              {managedCities.map((mc) => (
-                <ListItem
-                  key={mc.id}
-                  secondaryAction={
-                    <IconButton edge="end" onClick={() => deleteCity(mc.id)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  }
-                >
-                  <ListItemText primary={mc.cityName} />
-                </ListItem>
-              ))}
-            </List>
-          )}
+        <Paper
+          sx={{
+            p: { xs: 2, md: 3 },
+            borderRadius: 3,
+            boxShadow: '0 10px 28px rgba(18, 28, 46, 0.09)',
+            border: '1px solid #dfe5ef',
+            mb: 3,
+          }}
+        >
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr auto' }, gap: 2 }}>
+            <TextField
+              id="city-search"
+              type="text"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search flights, cities, or city names..."
+              fullWidth
+              size="small"
+            />
+            <Button
+              variant="contained"
+              startIcon={<FilterAltIcon />}
+              sx={{
+                height: 40,
+                px: 3,
+                fontWeight: 700,
+                bgcolor: '#1D3E98',
+                '&:hover': { bgcolor: '#15337f' },
+              }}
+            >
+              Filters
+            </Button>
+          </Box>
+
+          <Box
+            sx={{
+              mt: 2,
+              display: 'grid',
+              gap: 1.5,
+              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' },
+            }}
+          >
+            <FormControl fullWidth size="small">
+              <Select value={selectedCountry} onChange={(event) => setSelectedCountry(event.target.value)} displayEmpty>
+                <MenuItem value="" disabled>
+                  Select country
+                </MenuItem>
+                {countries.map((country) => (
+                  <MenuItem key={country.iso2} value={country.iso2}>
+                    {country.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth size="small">
+              <Select
+                value={selectedState}
+                onChange={(event) => setSelectedState(event.target.value)}
+                disabled={!states.length}
+                displayEmpty
+              >
+                <MenuItem value="" disabled>
+                  Select state / region
+                </MenuItem>
+                {states.map((stateItem) => (
+                  <MenuItem key={stateItem.iso2} value={stateItem.iso2}>
+                    {stateItem.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <TextField
+              value={newCityName}
+              onChange={(e) => setNewCityName(e.target.value)}
+              placeholder="New city name"
+              size="small"
+              fullWidth
+            />
+          </Box>
         </Paper>
+
+        {isLoading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 7 }}>
+            <CircularProgress size={46} sx={{ color: '#2c75d2' }} />
+          </Box>
+        )}
+
+        {!isLoading && error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+        {!isLoading && !error && (
+          <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' } }}>
+            <Paper sx={{ borderRadius: 3, border: '1px solid #dfe5ef', overflow: 'hidden' }}>
+              <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #e7edf7', bgcolor: '#f8faff' }}>
+                <Typography sx={{ fontWeight: 700, color: '#1D3E98' }}>CSC Cities ({filteredCities.length})</Typography>
+              </Box>
+              <List sx={{ maxHeight: 390, overflow: 'auto' }}>
+                {filteredCities.map((city) => (
+                  <ListItem key={city.name}>
+                    <ListItemText primary={city.name} />
+                  </ListItem>
+                ))}
+              </List>
+            </Paper>
+
+            <Paper sx={{ borderRadius: 3, border: '1px solid #dfe5ef', overflow: 'hidden' }}>
+              <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #e7edf7', bgcolor: '#f8faff' }}>
+                <Typography sx={{ fontWeight: 700, color: '#1D3E98' }}>Backend Cities ({managedCities.length})</Typography>
+              </Box>
+
+              {!backendBaseUrl ? (
+                <Box sx={{ p: 2 }}>
+                  <Alert severity="info">Seteaza <strong>VITE_API_BASE_URL</strong> in <strong>.env</strong> pentru aceasta sectiune.</Alert>
+                </Box>
+              ) : (
+                <List sx={{ maxHeight: 390, overflow: 'auto' }}>
+                  {managedCities.map((mc) => (
+                    <ListItem
+                      key={mc.id}
+                      secondaryAction={
+                        <IconButton edge="end" onClick={() => deleteCity(mc.id)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      }
+                    >
+                      <ListItemText primary={mc.cityName} />
+                    </ListItem>
+                  ))}
+                </List>
+              )}
+            </Paper>
+          </Box>
+        )}
       </Box>
-    </Container>
+    
   )
 }
 
